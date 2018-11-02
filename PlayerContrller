@@ -1,0 +1,70 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class PlayerController : MonoBehaviour {
+    [HideInInspector]
+    public bool isFacingRight = true;
+    [HideInInspector]
+    public bool isJumping = false;
+    //[HideInInspector]
+    public bool isGrounded = false;
+
+    public float jumpForce = 650.0f;
+    public float maxSpeed = 7.0f;
+
+    public Transform groundCheck;//用于检测玩家是否触地.
+    public LayerMask groundLayers;
+
+    private float groundCheckRadius = 0.2f;//距离groundCheck中心点的距离，用于测试触地.
+    private Rigidbody2D m_rigidbody;//用于存放gameobject的rigidbody2d组件.
+
+    void Start ()
+    {
+		m_rigidbody = gameObject.GetComponent<Rigidbody2D>();
+
+    }
+	
+	void Update ()
+    {
+        if (Input.GetButtonDown("Jump"))
+        {
+            if (isGrounded == true)
+            {
+                m_rigidbody.velocity=new Vector2(m_rigidbody.velocity.x,0);
+                m_rigidbody.AddForce(new Vector2(0, jumpForce));
+
+                //Debug.Log("isGrounded");
+            }
+        }
+       
+	}
+
+    void FixedUpdate()
+    {
+        isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayers);
+        //重要！！！！：OverlapCircle函数有3个参数（圆心坐标，圆半径，图层过滤），函数会生成一个圆形（不可见），
+        //圆心和半径如函数内设置所示，并同时检测在生成的不可见圆内&&特定图层内（函数第三个参数）的
+        //collider碰撞体，如果有就返回true，无返回false。
+        //我们看到player下的groundCheck中，我们对collider设置了偏移量，在设置了偏移量后，Collider的
+        //坐标中心还是坐标轴原点，而不是圆的中心；之前因为坐标轴和圆心重合，所以坐标原点是圆的中心.
+        float move = Input.GetAxis("Horizontal");
+        m_rigidbody.velocity = new Vector2(move * maxSpeed, m_rigidbody.velocity.y);
+
+        if ((move>0.0f&&isFacingRight==false)||(move<0.0f&&isFacingRight==true))
+        {
+            Flip();
+        }
+    }
+
+    /// <summary>
+    /// 用于翻转精灵.
+    /// </summary>
+    void Flip()
+    {
+        isFacingRight = !isFacingRight;
+        Vector3 playerScale = gameObject.transform.localScale;
+        playerScale.x = -1 * playerScale.x;
+        gameObject.transform.localScale = playerScale;
+    }
+}
